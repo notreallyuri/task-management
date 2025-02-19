@@ -1,0 +1,4 @@
+{
+  "name": "@acme/server",
+  "main": "./index.d.ts"
+}

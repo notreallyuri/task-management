@@ -1,0 +1,4 @@
+{
+  "name": "@acme/schemas",
+  "main": "./index.ts"
+}
