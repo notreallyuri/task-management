@@ -2,13 +2,12 @@
 import { Input } from "@/components/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema } from "@acme/schemas";
+import { loginSchema, type LoginData } from "@acme/schemas";
 import { trpc } from "@acme/client";
 import cn from "@/utils/cn";
-import { TRPCClientErrorLike } from "@trpc/client";
+import type { TRPCClientErrorLike } from "@trpc/client";
 import { AppRouter } from "@acme/server";
 import { useState } from "react";
-import { LoginData } from "@acme/schemas";
 import { useRouter } from "next/navigation";
 
 export default function SignIn() {
@@ -35,7 +34,6 @@ export default function SignIn() {
       router.push("/");
     } catch (err) {
       console.error("Login Failed:", err);
-
       if (err instanceof Error) setErrorMessage(err.message);
       else setErrorMessage("An unexpected error ocurred");
     }
@@ -86,6 +84,7 @@ export default function SignIn() {
         >
           Sign in
         </button>
+        {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
       </form>
     </>
   );

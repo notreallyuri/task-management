@@ -18,32 +18,16 @@ interface User {
   email: string;
 }
 
-const createContext = async ({
-  req,
-  res,
-}: {
-  req: FastifyRequest;
-  res: FastifyReply;
-}) => {
-  try {
-    const user = await req.jwtVerify<User>();
-
-    return { req, res, user };
-  } catch (err) {
-    return { req, res, user: null };
-  }
-};
-
 const app = Fastify({
   logger: true,
   ajv: { customOptions: { removeAdditional: "all", coerceTypes: true } },
 });
 
-const appRouter = router({
-  user: userRouter,
+app.register(jwt, {
+  secret: jwtSecret,
+  cookie: { cookieName: "Auth_key", signed: true },
 });
 
-app.register(jwt, { secret: jwtSecret });
 app.register(fastifyCookie, {
   secret: jwtSecret,
   hook: "onRequest",
@@ -53,6 +37,7 @@ app.register(fastifyCookie, {
     sameSite: "strict",
   },
 });
+
 app.register(cors, {
   origin: clientUrl,
   credentials: true,
@@ -71,6 +56,27 @@ app.decorate("auth", async function (req: FastifyRequest, res: FastifyReply) {
       message: "Please login to access this resource",
     });
   }
+});
+
+const createContext = async ({
+  req,
+  res,
+}: {
+  req: FastifyRequest;
+  res: FastifyReply;
+}) => {
+  try {
+    const user = await req.jwtVerify<User>();
+
+    return { req, res, user };
+  } catch (err) {
+    console.error("JWT verification failed:", err);
+    return { req, res, user: null };
+  }
+};
+
+const appRouter = router({
+  user: userRouter,
 });
 
 await app.register(fastifyTRPCPlugin, {

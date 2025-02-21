@@ -1,7 +1,10 @@
 export {
   userSchema,
   loginSchema,
+  createUserSchema,
+  updateUserSchema,
   type UserType,
+  type CreateUserType,
   type LoginData,
 } from "./src/user.schema";
 
