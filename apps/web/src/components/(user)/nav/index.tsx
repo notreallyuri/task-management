@@ -1,22 +1,18 @@
 "use client";
 import cn from "@/utils/cn";
-import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 
 interface SidebarProps {
   username?: string;
   userid?: string;
+  onClick: () => void;
 }
 
 export default function Nav({
   username = "username",
   userid = "userid",
+  onClick,
 }: SidebarProps) {
-  const router = useRouter();
-
-  const handleExit = () => {
-    router.push("/sign-in");
-  };
-
   return (
     <section className="fixed top-0 z-20 flex h-18 w-screen items-center justify-between border-r border-emerald-500 px-2">
       <h1 className="font-subDisplay text-3xl font-semibold text-emerald-600">
@@ -35,12 +31,13 @@ export default function Nav({
         </div>
         <button
           className={cn(
-            "ml-auto h-6 rounded-full border border-emerald-500 bg-emerald-50 px-2 text-xs",
+            "ml-4 size-8 rounded-full border border-emerald-500/25 bg-emerald-50 px-2 text-xs",
             "transition-colors duration-100 hover:bg-emerald-500 hover:text-white",
+            "flex items-center justify-center",
           )}
-          onClick={handleExit}
+          onClick={onClick}
         >
-          Sair
+          <LogOut />
         </button>
       </div>
     </section>

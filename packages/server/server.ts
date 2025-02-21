@@ -1,5 +1,5 @@
 import { router } from "@acme/lib";
-import { userRouter } from "@acme/router";
+import { userRouter, authRouter } from "@acme/router";
 import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
 import { fastifyCookie } from "@fastify/cookie";
 import cors from "@fastify/cors";
@@ -23,36 +23,41 @@ const app = Fastify({
   ajv: { customOptions: { removeAdditional: "all", coerceTypes: true } },
 });
 
-app.register(jwt, {
-  secret: jwtSecret,
-  cookie: { cookieName: "Auth_key", signed: true },
-});
-
 app.register(fastifyCookie, {
   secret: jwtSecret,
   hook: "onRequest",
   parseOptions: {
-    httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax",
+    path: "/",
   },
+});
+
+app.register(jwt, {
+  secret: jwtSecret,
+  cookie: { cookieName: "Auth_key", signed: false },
 });
 
 app.register(cors, {
   origin: clientUrl,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 });
 
 app.decorate("auth", async function (req: FastifyRequest, res: FastifyReply) {
   try {
+    console.log("Headers:", req.headers);
+    console.log("Cookies:", req.cookies);
+
     const user = await req.jwtVerify<User>();
+    console.log("User:", user);
     if (!user?.userId)
       throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
-    return user;
+    req.user = user;
   } catch (err) {
-    res.status(401).send({
-      error: "Unauthorized",
+    res.status(501).send({
+      error: "teste",
       message: "Please login to access this resource",
     });
   }
@@ -67,16 +72,18 @@ const createContext = async ({
 }) => {
   try {
     const user = await req.jwtVerify<User>();
+    console.log("Authenticated User:", user);
 
     return { req, res, user };
   } catch (err) {
-    console.error("JWT verification failed:", err);
+    console.log("JWT verification failed:", err);
     return { req, res, user: null };
   }
 };
 
 const appRouter = router({
   user: userRouter,
+  auth: authRouter,
 });
 
 await app.register(fastifyTRPCPlugin, {

@@ -1,11 +1,24 @@
-import { cookies } from "next/headers";
+"use client";
 import { Auth } from "@/components/LP/auth";
 import { NotAuth } from "@/components/LP/notAuth";
+import { trpc } from "@acme/client";
+import { Loader2 } from "lucide-react";
 
-export default async function Home() {
-  const cookieStore = await cookies();
-  const isAuth = Boolean(cookieStore.get("Auth_key"));
-  const userId = cookieStore.get("Auth_key")?.value;
+export interface authRes {
+  isAuthenticated: boolean;
+  userId: string;
+}
 
-  return <>{isAuth ? <Auth userId={userId ? userId : ""} /> : <NotAuth />}</>;
+export default function Home() {
+  const { data, isLoading } = trpc.auth.verify.useQuery();
+
+  if (isLoading) {
+    return (
+      <main className="flex h-screen w-screen items-center justify-center">
+        <Loader2 className="size-12 animate-spin text-emerald-600" />
+      </main>
+    );
+  }
+
+  return <>{data?.isAuthenticated ? <Auth /> : <NotAuth />}</>;
 }

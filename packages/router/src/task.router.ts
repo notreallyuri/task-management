@@ -65,28 +65,37 @@ export const taskRouter = router({
       }
     }),
 
-  getByUser: protectedProcedure
-    .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
-      try {
-        const tasks = await prisma.task.findMany({ where: input });
+  getByUser: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const userId = ctx.user?.userId;
+      console.log("ctx.user:", ctx.user);
 
-        if (tasks.length === 0)
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "No tasks found for this user",
-          });
-
-        return tasks;
-      } catch (err) {
-        console.error(err.message);
-
+      if (!userId)
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Could not retrieve tasks",
+          message: "I'm really lost",
         });
-      }
-    }),
+
+      const tasks = await prisma.task.findMany({ where: { userId } });
+
+      if (tasks.length === 0)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No tasks found for this user",
+        });
+
+      return tasks;
+    } catch (err) {
+      console.error(err.message);
+
+      if (err instanceof TRPCError) throw err;
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Could not retrieve tasks",
+      });
+    }
+  }),
 
   topics: topicRouter,
 });

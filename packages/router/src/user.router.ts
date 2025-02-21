@@ -88,6 +88,7 @@ export const userRouter = router({
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 60 * 60,
+        path: "/",
       });
 
       return { userId: user.id };
@@ -132,7 +133,19 @@ export const userRouter = router({
     }),
 
   logout: protectedProcedure.mutation(async ({ ctx }) => {
-    ctx.res.clearCookie("Auth_key");
+    console.log("❌❌ Logout called ❌❌");
+
+    ctx.res.clearCookie("Auth_key", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 60 * 60,
+      path: "/",
+    });
+
+    ctx.res.header("Cache-Control", "no-store");
+
+    console.log("Response Headers:", ctx.res.getHeaders());
 
     return { success: true };
   }),
@@ -152,6 +165,25 @@ export const userRouter = router({
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Could not fetch users",
+      });
+    }
+  }),
+
+  getById: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const id = ctx.user?.userId;
+
+      if (!id)
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found." });
+
+      const users = prisma.user.findUnique({ where: { id } });
+
+      return users;
+    } catch (err) {
+      console.error("Fetch error:", {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+        timestamp: new Date().toISOString(),
       });
     }
   }),
