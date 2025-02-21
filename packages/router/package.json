@@ -1,4 +1,5 @@
 {
   "name": "@acme/router",
-  "main": "./index.ts"
+  "main": "./index.ts",
+  "type": "module"
 }

@@ -11,13 +11,20 @@ export const updateTaskSchema = z.object({
   title: z.string(),
 });
 
-export const topicSchema = z.object({
+export const createTopicSchema = z.object({
   id: z.number(),
   subTitle: z.string().min(1, "Subtitle is required"),
   content: z.string().min(1, "Content is required"),
   taskId: z.string().uuid(),
 });
 
+export const updateTopicSchema = z.object({
+  id: z.number(),
+  subTitle: z.string().optional(),
+  content: z.string().optional(),
+});
+
 export type CreateTaskType = z.infer<typeof createTaskSchema>;
-export type TopicType = z.infer<typeof topicSchema>;
-export type UpdateTaskType = z.infer<typeof topicSchema>;
+export type UpdateTaskType = z.infer<typeof updateTaskSchema>;
+
+export type CreateTopicSchema = z.infer<typeof createTopicSchema>;

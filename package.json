@@ -10,7 +10,10 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
-    "prettier": "^3.5.0",
+    "nodemon": "^3.1.9",
+    "prettier": "^3.5.1",
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "ts-node": "^10.9.2",
     "turbo": "^2.4.2",
     "typescript": "5.7.3"
   },
@@ -25,6 +28,7 @@
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^10.0.2",
+    "@fastify/jwt": "^9.0.4",
     "@hookform/resolvers": "^4.1.0",
     "@prisma/client": "^6.4.0",
     "@tanstack/react-query": "^4.36.1",

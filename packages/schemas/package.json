@@ -1,4 +1,5 @@
 {
   "name": "@acme/schemas",
-  "main": "./index.ts"
+  "main": "./index.ts",
+  "type": "module"
 }

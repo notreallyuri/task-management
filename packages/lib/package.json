@@ -1,3 +1,4 @@
 {
-  "name": "@acme/lib"
+  "name": "@acme/lib",
+  "type": "module"
 }

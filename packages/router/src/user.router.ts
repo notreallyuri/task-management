@@ -1,30 +1,54 @@
 import { z } from "zod";
-import { router, procedure, prisma } from "@acme/lib";
+import { router, publicProcedure, protectedProcedure, prisma } from "@acme/lib";
 import { TRPCError } from "@trpc/server";
 import { userSchema, loginSchema } from "@acme/schemas";
+import { taskRouter } from "./task.router";
 import bcrypt from "bcrypt";
+import { Prisma } from "@prisma/client";
 
 export const userRouter = router({
-  create: procedure.input(userSchema).mutation(async ({ input }) => {
+  create: publicProcedure.input(userSchema).mutation(async ({ input, ctx }) => {
     const { password, ...data } = input;
 
     try {
-      const hash = await bcrypt.hash(password, 10);
-
       const inUse = await prisma.user.findUnique({
         where: { email: input.email },
       });
+
       if (inUse)
         throw new TRPCError({
           code: "CONFLICT",
           message: "Email already in use.",
         });
 
-      return await prisma.user.create({
+      const hash = await bcrypt.hash(password, 10);
+
+      const user = await prisma.user.create({
         data: { hashPassword: hash, ...data },
+        select: { id: true, email: true, username: true },
       });
+
+   
+
+      const token = await ctx.res.jwtSign({
+        userId: user.id,
+        email: user.email,
+      });
+
+      ctx.res.setCookie("Auth_key", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 60 * 60,
+      });
+
+      return user;
     } catch (err) {
-      console.error("A problem has occured", err);
+      console.error("User registration error:", {
+        error: err,
+        email: input.email,
+        timestamp: new Date().toISOString(),
+      });
 
       if (err instanceof Error) throw err;
 
@@ -35,48 +59,82 @@ export const userRouter = router({
     }
   }),
 
-  login: procedure.input(loginSchema).mutation(async ({ input }) => {
+  login: publicProcedure.input(loginSchema).mutation(async ({ input, ctx }) => {
     try {
       const user = await prisma.user.findUnique({
         where: { email: input.email },
       });
       if (!user)
-        throw new TRPCError({ code: "UNAUTHORIZED", message: "Wrong email." });
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Invalid credentials",
+        });
 
       const isValid = await bcrypt.compare(input.password, user.hashPassword);
       if (!isValid)
         throw new TRPCError({
           code: "UNAUTHORIZED",
-          message: "Wrong password",
+          message: "Invalid credentials",
         });
 
-      return { userId: user.id, email: user.email };
+
+      const token = await ctx.res.jwtSign({
+        userId: user.id,
+        email: user.email,
+      });
+
+      ctx.res.setCookie("Auth_key", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 60 * 60,
+      });
+
+      return { userId: user.id };
     } catch (err) {
-      console.error("A problem has ocured", err);
+      console.error("Login error:", {
+        error: err,
+        email: input.email,
+        timestamp: new Date().toISOString(),
+      });
 
       if (err instanceof Error) throw err;
 
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: "Unexpected Error",
+        message: "Unexpected error during login",
       });
     }
   }),
 
-  delete: procedure
+  deleteUser: protectedProcedure
     .input(z.object({ email: z.string().email() }))
-    .mutation(async ({ input }) => {
-      const user = await prisma.user.findUnique({
-        where: { email: input.email },
-      });
-
-      if (!user)
-        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
-
+    .mutation(async ({ input, ctx }) => {
       try {
-        return await prisma.user.delete({ where: { email: input.email } });
+        const context = await ctx;
+
+        if (context.user?.email !== input.email) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only delete your own account",
+          });
+        }
+
+        const deletedUser = await prisma.user.delete({
+          where: { email: input.email },
+        });
+
+        context.res.clearCookie("Auth_key");
+
+        return deletedUser;
       } catch (err) {
-        console.error(err.message);
+        if (err instanceof Prisma.PrismaClientKnownRequestError) {
+          if (err.code === "P2025")
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "User not found",
+            });
+        }
 
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -84,4 +142,14 @@ export const userRouter = router({
         });
       }
     }),
+
+  logout: protectedProcedure.mutation(async ({ ctx }) => {
+    const context = await ctx;
+
+    context.res.clearCookie("Auth_key");
+
+    return { success: true };
+  }),
+
+  tasks: taskRouter,
 });

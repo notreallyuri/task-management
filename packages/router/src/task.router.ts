@@ -1,46 +1,51 @@
 import z from "zod";
-import { router, procedure, prisma } from "@acme/lib";
+import { router, publicProcedure, protectedProcedure, prisma } from "@acme/lib";
 import { TRPCError } from "@trpc/server";
 import { createTaskSchema, updateTaskSchema } from "@acme/schemas";
+import { topicRouter } from "./topic.router";
 
 export const taskRouter = router({
-  create: procedure.input(createTaskSchema).mutation(async ({ input }) => {
-    try {
-      return await prisma.task.create({ data: input });
-    } catch (err) {
-      console.error("Failed creating task:", err.message);
+  createTask: protectedProcedure
+    .input(createTaskSchema)
+    .mutation(async ({ input }) => {
+      try {
+        return await prisma.task.create({ data: input });
+      } catch (err) {
+        console.error("Failed creating task:", err.message);
 
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Unexpected error",
-      });
-    }
-  }),
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Unexpected error",
+        });
+      }
+    }),
 
-  update: procedure.input(updateTaskSchema).mutation(async ({ input }) => {
-    try {
-      const existingTask = await prisma.task.findUnique({
-        where: { id: input.id },
-        select: { id: true },
-      });
-      if (!existingTask)
-        throw new TRPCError({ code: "NOT_FOUND", message: "Task not found" });
+  updateTitle: protectedProcedure
+    .input(updateTaskSchema)
+    .mutation(async ({ input }) => {
+      try {
+        const existingTask = await prisma.task.findUnique({
+          where: { id: input.id },
+          select: { id: true },
+        });
+        if (!existingTask)
+          throw new TRPCError({ code: "NOT_FOUND", message: "Task not found" });
 
-      return await prisma.task.update({
-        where: { id: input.id },
-        data: { title: input.title },
-      });
-    } catch (err) {
-      console.error(err.message);
+        return await prisma.task.update({
+          where: { id: input.id },
+          data: { title: input.title },
+        });
+      } catch (err) {
+        console.error(err.message);
 
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Unexpected error",
-      });
-    }
-  }),
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Unexpected error",
+        });
+      }
+    }),
 
-  delete: procedure
+  deleteTask: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
       try {
@@ -60,7 +65,7 @@ export const taskRouter = router({
       }
     }),
 
-  getByUser: procedure
+  getByUser: protectedProcedure
     .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
       try {
@@ -82,4 +87,6 @@ export const taskRouter = router({
         });
       }
     }),
+
+  topics: topicRouter,
 });

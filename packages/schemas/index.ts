@@ -1,9 +1,16 @@
-export { userSchema, loginSchema, type UserType } from "./src/user.schema";
+export {
+  userSchema,
+  loginSchema,
+  type UserType,
+  type LoginData,
+} from "./src/user.schema";
+
 export {
   createTaskSchema,
-  topicSchema,
+  createTopicSchema,
   updateTaskSchema,
+  updateTopicSchema,
   type CreateTaskType,
-  type TopicType,
+  type CreateTopicSchema,
   type UpdateTaskType,
 } from "./src/task.shema";

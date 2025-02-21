@@ -12,8 +12,9 @@ export const userSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string(),
-  password: z.string(),
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(8, "Password must be at least 8 characters long"),
 });
 
 export type UserType = z.infer<typeof userSchema>;
+export type LoginData = z.infer<typeof loginSchema>;
