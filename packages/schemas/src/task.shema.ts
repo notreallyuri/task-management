@@ -1,14 +1,14 @@
 import { z } from "zod";
 
 export const createTaskSchema = z.object({
-  id: z.string(),
   title: z.string().min(1, "Task title is required"),
-  userId: z.string().uuid(),
+  description: z.string().optional(),
 });
 
 export const updateTaskSchema = z.object({
   id: z.string().uuid(),
-  title: z.string(),
+  title: z.string().optional(),
+  description: z.string().optional(),
 });
 
 export const createTopicSchema = z.object({

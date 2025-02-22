@@ -7,14 +7,15 @@ import cn from "@/utils/cn";
 interface BaseProps {
   label: string;
   className?: string;
+  error?: string;
 }
 
 export interface InputProps
   extends BaseProps,
     React.InputHTMLAttributes<HTMLInputElement> {
   type?: "text" | "password" | "number" | "date" | "email" | "phone";
-  error?: string;
   showPasswordToggle?: boolean;
+  required?: boolean;
 }
 
 export interface TextAreaProps
@@ -40,10 +41,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       id,
       error,
       showPasswordToggle = false,
-
+      required = false,
       ...rest
     },
-    ref
+    ref,
   ) => {
     const [showPassword, setShowPassword] = useState(false);
 
@@ -59,9 +60,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       <div className="relative flex w-full flex-col">
         <label
           htmlFor={id}
-          className={cn("text-gray-700 text-lg", error && "text-error-300")}
+          className={cn("text-lg text-gray-700", error && "text-error-300")}
         >
           {label}
+          {required && <span className="text-sm text-red-400">*</span>}
         </label>
         <input
           id={id}
@@ -69,9 +71,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           {...rest}
           className={cn(
-            "group h-10 rounded-lg border border-gray-400  px-2 outline-none",
+            "group h-10 rounded-lg border border-gray-400 px-2 outline-none",
             !error && "focus:border-green-400",
-            error && "border-error-300"
+            error && "border-error-300",
           )}
         />
         {showPasswordToggle && type === "password" && (
@@ -81,7 +83,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               "border-none bg-none p-1 outline-none",
               showPassword ? "text-indigo-400" : "text-gray-300",
               "hover:text-indigo-400/70",
-              error && "-translate-y-2"
+              error && "-translate-y-2",
             )}
             type="button"
             onClick={handleTogglePassword}
@@ -96,18 +98,28 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {error && <p className="text-error-300 text-sm">{error}</p>}
       </div>
     );
-  }
+  },
 );
 
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
-  ({ label, id, ...rest }, ref) => {
+  ({ label, id, error, ...rest }, ref) => {
     return (
-      <div>
+      <div className="flex flex-col">
         <label htmlFor={id}>{label}</label>
-        <textarea name="" id={id} ref={ref} {...rest}></textarea>
+        <textarea
+          name=""
+          id={id}
+          ref={ref}
+          {...rest}
+          className={cn(
+            "group min-h-24 rounded-lg border border-gray-400 px-2 outline-none",
+            !error && "focus:border-green-400",
+            error && "border-error-300",
+          )}
+        ></textarea>
       </div>
     );
-  }
+  },
 );
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
@@ -124,7 +136,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         </select>
       </div>
     );
-  }
+  },
 );
 
 Input.displayName = "Input";

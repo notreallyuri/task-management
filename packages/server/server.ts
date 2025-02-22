@@ -81,7 +81,7 @@ const createContext = async ({
   }
 };
 
-const appRouter = router({
+export const appRouter = router({
   user: userRouter,
   auth: authRouter,
 });

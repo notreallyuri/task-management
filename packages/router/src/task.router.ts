@@ -7,9 +7,21 @@ import { topicRouter } from "./topic.router";
 export const taskRouter = router({
   createTask: protectedProcedure
     .input(createTaskSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.userId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "User not authenticated or missing userId",
+        });
+      }
       try {
-        return await prisma.task.create({ data: input });
+        return await prisma.task.create({
+          data: {
+            title: input.title,
+            description: input.description,
+            userId: ctx.user?.userId,
+          },
+        });
       } catch (err) {
         console.error("Failed creating task:", err.message);
 

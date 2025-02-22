@@ -178,7 +178,7 @@ export const userRouter = router({
 
       const users = prisma.user.findUnique({ where: { id } });
 
-      return users;
+      return users
     } catch (err) {
       console.error("Fetch error:", {
         error: err instanceof Error ? err.message : String(err),
